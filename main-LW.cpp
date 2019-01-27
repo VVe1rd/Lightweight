@@ -88,12 +88,12 @@ static void showTestVector(void)
 }
 
 
-int main_LW(char* filename)
+int main_LW(char* msg_filename, char*)
 {
     /* A message is read from the file. */
-    FILE *fp = fopen(filename, "r");
+    FILE *fp = fopen(msg_filename, "r");
     if (fp == NULL) {
-        fprintf(stderr, "Not found: %s\n", filename);
+        fprintf(stderr, "Not found: %s\n", msg_filename);
         exit(EXIT_FAILURE);
     }
     BitSequence *data = (BitSequence*)malloc(BUFSIZ);
