@@ -1,32 +1,32 @@
 /*
-Lesamnta-LW reference C99 implementation
-The code is based on reference [1].  APIs are the same as those of
-the SHA-3 competition.
-Reference
-[1] S. Hirose, K. Ideguchi, H. Kuwakado, T. Owada, B. Preneel, and H. Yoshida,
-"An AES based 256-bit hash function for lightweight applications: Lesamnta-LW,"
-IEICE TRANSACTIONS on Fundamentals of Electronics, Communications and Computer Sciences,
-Vol.E95-A, No.1, pp.89-99, 2012/01/01.
-Note: Lesamnta is a registered trademark of Hitachi, Ltd. in Japan.
-Released under the MIT license
-Copyright (C) 2015 Hidenori Kuwakado
-Permission is hereby granted, free of charge, to any person
-obtaining a copy of this software and associated documentation files
-(the "Software"), to deal in the Software without restriction,
-including without limitation the rights to use, copy, modify, merge,
-publish, distribute, sublicense, and/or sell copies of the Software,
-and to permit persons to whom the Software is furnished to do so,
-subject to the following conditions:
-The above copyright notice and this permission notice shall be
-included in all copies or substantial portions of the Software.
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS
-BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
-ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
-CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+  Lesamnta-LW reference C99 implementation
+  The code is based on reference [1].  APIs are the same as those of
+  the SHA-3 competition.
+  Reference
+  [1] S. Hirose, K. Ideguchi, H. Kuwakado, T. Owada, B. Preneel, and H. Yoshida,
+      "An AES based 256-bit hash function for lightweight applications: Lesamnta-LW,"
+      IEICE TRANSACTIONS on Fundamentals of Electronics, Communications and Computer Sciences,
+      Vol.E95-A, No.1, pp.89-99, 2012/01/01.
+  Note: Lesamnta is a registered trademark of Hitachi, Ltd. in Japan.
+  Released under the MIT license
+  Copyright (C) 2015 Hidenori Kuwakado
+  Permission is hereby granted, free of charge, to any person
+  obtaining a copy of this software and associated documentation files
+  (the "Software"), to deal in the Software without restriction,
+  including without limitation the rights to use, copy, modify, merge,
+  publish, distribute, sublicense, and/or sell copies of the Software,
+  and to permit persons to whom the Software is furnished to do so,
+  subject to the following conditions:
+  The above copyright notice and this permission notice shall be
+  included in all copies or substantial portions of the Software.
+  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+  EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+  MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+  NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS
+  BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
+  ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+  CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+  SOFTWARE.
 */
 
 #include <stdint.h>
@@ -35,29 +35,29 @@ SOFTWARE.
 
 /* Lesamnta-LW parameters */
 enum {
-	/* Hash length */
-	HashLengthInBit = LESAMNTALW_HASH_BITLENGTH,
-	HashLengthInByte = HashLengthInBit / 8,
-	HashLengthInWord = HashLengthInBit / 32,
-	/* Compression function */
-	MessageBlockLengthInBit = 128,
-	MessageBlockLengthInByte = MessageBlockLengthInBit / 8,
-	MessageBlockLengthInWord = MessageBlockLengthInBit / 32,
-	/* Blockcipher part */
-	NumberOfRounds = 64,
-	KeyLengthInBit = 128,
-	KeyLengthInByte = KeyLengthInBit / 8,
-	KeyLengthInWord = KeyLengthInBit / 32,
-	BlockLengthInBit = 256,
-	BlockLengthInByte = BlockLengthInBit / 8,
-	BlockLengthInWord = BlockLengthInBit / 32,
+    /* Hash length */
+    HashLengthInBit  = LESAMNTALW_HASH_BITLENGTH,
+    HashLengthInByte = HashLengthInBit / 8,
+    HashLengthInWord = HashLengthInBit / 32,
+    /* Compression function */
+    MessageBlockLengthInBit  = 128,
+    MessageBlockLengthInByte = MessageBlockLengthInBit / 8,
+    MessageBlockLengthInWord = MessageBlockLengthInBit / 32,
+    /* Blockcipher part */
+    NumberOfRounds = 64,
+    KeyLengthInBit  = 128,
+    KeyLengthInByte = KeyLengthInBit / 8,
+    KeyLengthInWord = KeyLengthInBit / 32,
+    BlockLengthInBit  = 256,
+    BlockLengthInByte = BlockLengthInBit / 8,
+    BlockLengthInWord = BlockLengthInBit / 32,
 };
 
 /* Initial values
-Ref: IEICE Trans. vol.E95-A, no.1, 2012, p.97 */
+   Ref: IEICE Trans. vol.E95-A, no.1, 2012, p.97 */
 static const uint32_t initialValue[8] = {
-	0x00000256U, 0x00000256U, 0x00000256U, 0x00000256U,
-	0x00000256U, 0x00000256U, 0x00000256U, 0x00000256U,
+    0x00000256U, 0x00000256U, 0x00000256U, 0x00000256U,
+    0x00000256U, 0x00000256U, 0x00000256U, 0x00000256U,
 };
 
 /* AES-Encryption S-Box */
@@ -81,164 +81,164 @@ static const uint8_t sbox[256] = {
 };
 
 /* Round constants
-Ref: IEICE Trans. vol.E95-A, no.1, 2012, p.97 */
+   Ref: IEICE Trans. vol.E95-A, no.1, 2012, p.97 */
 static const uint32_t C[64] = {
-	0xa432337fU, 0x945e1f8fU, 0x92539a11U, 0x24b90062U,
-	0x6971c64cU, 0xd6e3f449U, 0x2c2f0da9U, 0x33769295U,
-	0xeb506df2U, 0x708cebfeU, 0xb83ab7bfU, 0x97df0f17U,
-	0x9223b802U, 0x7fa29140U, 0x0ff45228U, 0x01fe8a45U,
-	0xed016ee8U, 0x1da02dddU, 0xee8aba1bU, 0x46c4c223U,
-	0x53cd0d24U, 0xd1b46d24U, 0xc1fb4124U, 0xc3f2a4a4U,
-	0xc3b39814U, 0xc3bbbf82U, 0x759191b0U, 0x0eb23236U,
-	0xb7fd6c86U, 0xa0d48750U, 0x141a90eaU, 0x6f65b45dU,
-	0xe0d2092bU, 0x470fd445U, 0xe5df4528U, 0x1cbbe8a5U,
-	0xeea9c2b4U, 0xc618f4d6U, 0xaee8345aU, 0x783be0cbU,
-	0x5412e979U, 0x3c712e0fU, 0x87567c21U, 0x2619bca4U,
-	0xdf0efb14U, 0xc02c13e2U, 0x75e3643cU, 0xd571a007U,
-	0x9a766de0U, 0x134ecdbcU, 0xd9a41537U, 0x9becdb46U,
-	0xa556b1a8U, 0x14aad635U, 0xefabe566U, 0xabde566cU,
-	0xceb6064dU, 0xf4e87f69U, 0x286e7ccdU, 0xe8337039U,
-	0x2bf51d27U, 0x85a6fa44U, 0xcb7913c8U, 0x196f2279U,
+    0xa432337fU, 0x945e1f8fU, 0x92539a11U, 0x24b90062U,
+    0x6971c64cU, 0xd6e3f449U, 0x2c2f0da9U, 0x33769295U,
+    0xeb506df2U, 0x708cebfeU, 0xb83ab7bfU, 0x97df0f17U,
+    0x9223b802U, 0x7fa29140U, 0x0ff45228U, 0x01fe8a45U,
+    0xed016ee8U, 0x1da02dddU, 0xee8aba1bU, 0x46c4c223U,
+    0x53cd0d24U, 0xd1b46d24U, 0xc1fb4124U, 0xc3f2a4a4U,
+    0xc3b39814U, 0xc3bbbf82U, 0x759191b0U, 0x0eb23236U,
+    0xb7fd6c86U, 0xa0d48750U, 0x141a90eaU, 0x6f65b45dU,
+    0xe0d2092bU, 0x470fd445U, 0xe5df4528U, 0x1cbbe8a5U,
+    0xeea9c2b4U, 0xc618f4d6U, 0xaee8345aU, 0x783be0cbU,
+    0x5412e979U, 0x3c712e0fU, 0x87567c21U, 0x2619bca4U,
+    0xdf0efb14U, 0xc02c13e2U, 0x75e3643cU, 0xd571a007U,
+    0x9a766de0U, 0x134ecdbcU, 0xd9a41537U, 0x9becdb46U,
+    0xa556b1a8U, 0x14aad635U, 0xefabe566U, 0xabde566cU,
+    0xceb6064dU, 0xf4e87f69U, 0x286e7ccdU, 0xe8337039U,
+    0x2bf51d27U, 0x85a6fa44U, 0xcb7913c8U, 0x196f2279U,
 };
 
 
 /* AES MixColumns and multiplications over GF(256) */
 static uint8_t mul02(uint8_t v)
 {
-	uint16_t u = v << 1;
-	if (u > 0xff) {
-		u = u - 0x100;
-		u = u ^ 0x1b;
-	}
-	return (uint8_t)u;
+    uint16_t u = v << 1;
+    if (u > 0xff) {
+        u = u - 0x100;
+        u = u ^ 0x1b;
+    }
+    return (uint8_t) u;
 }
 
 static uint8_t mul03(uint8_t v)
 {
-	return (uint8_t)(mul02(v) ^ v);
+    return (uint8_t) (mul02(v) ^ v);
 }
 
 static uint8_t mul01(uint8_t v)
 {
-	return v;
+    return v;
 }
 
 static void MixColumns(uint8_t *s0, uint8_t *s1, uint8_t *s2, uint8_t *s3)
 {
-	uint8_t t0 = mul02(*s0) ^ mul03(*s1) ^ mul01(*s2) ^ mul01(*s3);
-	uint8_t t1 = mul01(*s0) ^ mul02(*s1) ^ mul03(*s2) ^ mul01(*s3);
-	uint8_t t2 = mul01(*s0) ^ mul01(*s1) ^ mul02(*s2) ^ mul03(*s3);
-	uint8_t t3 = mul03(*s0) ^ mul01(*s1) ^ mul01(*s2) ^ mul02(*s3);
-	*s0 = t0;
-	*s1 = t1;
-	*s2 = t2;
-	*s3 = t3;
+    uint8_t t0 = mul02(*s0) ^ mul03(*s1) ^ mul01(*s2) ^ mul01(*s3);
+    uint8_t t1 = mul01(*s0) ^ mul02(*s1) ^ mul03(*s2) ^ mul01(*s3);
+    uint8_t t2 = mul01(*s0) ^ mul01(*s1) ^ mul02(*s2) ^ mul03(*s3);
+    uint8_t t3 = mul03(*s0) ^ mul01(*s1) ^ mul01(*s2) ^ mul02(*s3);
+    *s0 = t0;
+    *s1 = t1;
+    *s2 = t2;
+    *s3 = t3;
 }
 
 /* Function Q and packing/unpacking functions */
 static uint32_t toUint32(uint8_t s0, uint8_t s1, uint8_t s2, uint8_t s3)
 {
-	return (((uint32_t)s0) << 24) |
-		(((uint32_t)s1) << 16) | (((uint32_t)s2) << 8) | (((uint32_t)s3) << 0);
+    return (((uint32_t) s0) << 24) |
+        (((uint32_t) s1) << 16) | (((uint32_t) s2) << 8) | (((uint32_t) s3) << 0);
 }
 
 static void toUint8(uint8_t *s0, uint8_t *s1, uint8_t *s2, uint8_t *s3, uint32_t x)
 {
-	*s0 = (uint8_t)(x >> 24);
-	*s1 = (uint8_t)(x >> 16);
-	*s2 = (uint8_t)(x >> 8);
-	*s3 = (uint8_t)(x >> 0);
+    *s0 = (uint8_t) (x >> 24);
+    *s1 = (uint8_t) (x >> 16);
+    *s2 = (uint8_t) (x >>  8);
+    *s3 = (uint8_t) (x >>  0);
 }
 
 static void functionQ(uint32_t *buf)
 {
-	uint8_t s0 = 0x00, s1 = 0x00, s2 = 0x00, s3 = 0x00;
-	toUint8(&s0, &s1, &s2, &s3, *buf);
-	s0 = sbox[s0];
-	s1 = sbox[s1];
-	s2 = sbox[s2];
-	s3 = sbox[s3];
-	MixColumns(&s0, &s1, &s2, &s3);
-	*buf = toUint32(s0, s1, s2, s3);
+    uint8_t s0 = 0x00, s1 = 0x00, s2 = 0x00, s3 = 0x00;
+    toUint8(&s0, &s1, &s2, &s3, *buf);
+    s0 = sbox[s0];
+    s1 = sbox[s1];
+    s2 = sbox[s2];
+    s3 = sbox[s3];
+    MixColumns(&s0, &s1, &s2, &s3);
+    *buf = toUint32(s0, s1, s2, s3);
 }
 
 /* Function R */
 static void functionR(uint32_t *buf)
 {
-	uint8_t s[8] = { 0x00 };
-	toUint8(s + 0, s + 1, s + 2, s + 3, buf[0]);
-	toUint8(s + 4, s + 5, s + 6, s + 7, buf[1]);
-	buf[0] = toUint32(s[4], s[5], s[2], s[3]);
-	buf[1] = toUint32(s[0], s[1], s[6], s[7]);
+    uint8_t s[8] = { 0x00 };
+    toUint8(s + 0, s + 1, s + 2, s + 3, buf[0]);
+    toUint8(s + 4, s + 5, s + 6, s + 7, buf[1]);
+    buf[0] = toUint32(s[4], s[5], s[2], s[3]);
+    buf[1] = toUint32(s[0], s[1], s[6], s[7]);
 }
 
 /* Function G */
 static void functionG(uint32_t *output, uint32_t key, const uint32_t *input)
 {
-	uint32_t buf[2] = { 0x00 };
-	memcpy(buf, input, sizeof(buf));
-	buf[0] ^= key;
-	functionQ(buf + 0);
-	functionQ(buf + 1);
-	functionR(buf);
-	memcpy(output, buf, sizeof(buf));
+    uint32_t buf[2] = { 0x00 };
+    memcpy(buf, input, sizeof(buf));
+    buf[0] ^= key;
+    functionQ(buf + 0);
+    functionQ(buf + 1);
+    functionR(buf);
+    memcpy(output, buf, sizeof(buf));
 }
 
 /* Key schedule */
 static void keySchedule(uint32_t *roundKey, const uint32_t *key)
 {
-	uint32_t k[KeyLengthInWord] = { 0x00 };
-	memcpy(k, key, sizeof(k));
+    uint32_t k[KeyLengthInWord] = { 0x00 };
+    memcpy(k, key, sizeof(k));
 
-	for (int round = 0; round < NumberOfRounds; ++round) {
-		roundKey[round] = k[0];
-		uint32_t buf = C[round] ^ k[2];
-		functionQ(&buf);
-		buf ^= k[3];
+    for (int round = 0; round < NumberOfRounds; ++round) {
+        roundKey[round] = k[0];
+        uint32_t buf = C[round] ^ k[2];
+        functionQ(&buf);
+        buf ^= k[3];
 
-		k[3] = k[2];
-		k[2] = k[1];
-		k[1] = k[0];
-		k[0] = buf;
-	}
+        k[3] = k[2];
+        k[2] = k[1];
+        k[1] = k[0];
+        k[0] = buf;
+    }
 }
 
 /* Message mixing function */
 static void messageMixing(uint32_t *block, const uint32_t *roundKey)
 {
-	for (int round = 0; round < NumberOfRounds; ++round) {
-		uint32_t buf[2] = { 0x00 };
-		functionG(buf, roundKey[round], block + 4);
-		buf[0] ^= block[6];
-		buf[1] ^= block[7];
+    for (int round = 0; round < NumberOfRounds; ++round) {
+        uint32_t buf[2] = { 0x00 };
+        functionG(buf, roundKey[round], block + 4);
+        buf[0] ^= block[6];
+        buf[1] ^= block[7];
 
-		block[7] = block[5];
-		block[6] = block[4];
-		block[5] = block[3];
-		block[4] = block[2];
-		block[3] = block[1];
-		block[2] = block[0];
-		block[1] = buf[1];
-		block[0] = buf[0];
-	}
+        block[7] = block[5];
+        block[6] = block[4];
+        block[5] = block[3];
+        block[4] = block[2];
+        block[3] = block[1];
+        block[2] = block[0];
+        block[1] = buf[1];
+        block[0] = buf[0];
+    }
 }
 
 /* Blockcipher encryption used in Lesamnta-LW */
 static void blockCipher(uint32_t *ciphertext, const uint32_t *key, const uint32_t *plaintext)
 {
-	uint32_t roundKey[NumberOfRounds] = { 0x00 };
-	keySchedule(roundKey, key);
-	uint32_t block[BlockLengthInWord] = { 0x00 };
-	memcpy(block, plaintext, sizeof(block));
-	messageMixing(block, roundKey);
-	memcpy(ciphertext, block, sizeof(block));
+    uint32_t roundKey[NumberOfRounds] = { 0x00 };
+    keySchedule(roundKey, key);
+    uint32_t block[BlockLengthInWord] = { 0x00 };
+    memcpy(block, plaintext, sizeof(block));
+    messageMixing(block, roundKey);
+    memcpy(ciphertext, block, sizeof(block));
 }
 
 
 /* ***************************************************************** */
 /* SHA-3 API: Internal state */
 typedef struct {
-	int hashbitlen;
+    int hashbitlen;
 	uint32_t messageLength[2];
 	uint32_t remainingLength;
 	uint32_t message[MessageBlockLengthInWord];
@@ -246,192 +246,190 @@ typedef struct {
 } hashState;
 
 /*
-SHA-3 API: Init() initializes a hashState with the intended hash
-length of this particular instantiation.  Additionally, any data
-independent setup is performed.
-Parameters:
-- state: a structure that holds the hashState information
-- hashbitlen: an integer value that indicates the length of the hash
-output in bits.
-Returns:
-- Success value.
+  SHA-3 API: Init() initializes a hashState with the intended hash
+  length of this particular instantiation.  Additionally, any data
+  independent setup is performed.
+  Parameters:
+  - state: a structure that holds the hashState information
+  - hashbitlen: an integer value that indicates the length of the hash
+  output in bits.
+  Returns:
+  - Success value.
 */
 static HashReturn Init(hashState *state, int hashbitlen)
 {
-	/* The hash length is 256. */
-	if (hashbitlen != HashLengthInBit) {
-		return BAD_HASHBITLEN;
-	}
-	else {
-		state->hashbitlen = hashbitlen;
-	}
-	/* messageLength[0] is the most significant word. */
-	state->messageLength[0] = 0;
-	state->messageLength[1] = 0;
-	state->remainingLength = 0;
-	memset(state->message, 0x00, MessageBlockLengthInByte);
-	memcpy(state->hash, initialValue, HashLengthInByte);
+    /* The hash length is 256. */
+    if (hashbitlen != HashLengthInBit) {
+        return BAD_HASHBITLEN;
+    } else {
+        state->hashbitlen = hashbitlen;
+    }
+    /* messageLength[0] is the most significant word. */
+    state->messageLength[0] = 0;
+    state->messageLength[1] = 0;
+    state->remainingLength = 0;
+    memset(state->message, 0x00, MessageBlockLengthInByte);
+    memcpy(state->hash, initialValue, HashLengthInByte);
 
-	return SUCCESS;
+    return SUCCESS;
 }
 
 static void setMessage(uint32_t *message, const BitSequence *data)
 {
-	memset(message, 0x00, MessageBlockLengthInByte);
-	for (int i = 0; i < MessageBlockLengthInByte; ++i) {
-		message[i / 4] |= ((uint32_t)data[i]) << (24 - 8 * (i % 4));
-	}
+    memset(message, 0x00, MessageBlockLengthInByte);
+    for (int i = 0; i < MessageBlockLengthInByte; ++i) {
+        message[i / 4] |= ((uint32_t) data[i]) << (24 - 8 * (i % 4));
+    }
 }
 
 static void setRemainingMessage(uint32_t *message, uint32_t remainingLength, const BitSequence *data)
 {
-	memset(message, 0x00, MessageBlockLengthInByte);
-	int last = remainingLength / 8 + (remainingLength % 8 == 0 ? -1 : 0);
-	for (int i = 0; i <= last; ++i) {
-		message[i / 4] |= ((uint32_t)data[i]) << (24 - 8 * (i % 4));
-	}
+    memset(message, 0x00, MessageBlockLengthInByte);
+    int last = remainingLength / 8 + (remainingLength % 8 == 0 ? -1 : 0);
+    for (int i = 0; i <= last; ++i) {
+        message[i / 4] |= ((uint32_t) data[i]) << (24 - 8 * (i % 4));
+    }
 }
 
 /* Compression function */
 static void compressionFunction(uint32_t *hash, const uint32_t *message)
 {
-	uint32_t key[KeyLengthInWord] = { 0x00 };
-	uint32_t plaintext[BlockLengthInWord] = { 0x00 };
-	memcpy(key, hash, sizeof(key));
-	memcpy(plaintext, message, sizeof(plaintext) / 2);
-	memcpy(plaintext + 4, hash + 4, sizeof(plaintext) / 2);
-	uint32_t ciphertext[BlockLengthInWord] = { 0x00 };
-	blockCipher(ciphertext, key, plaintext);
-	memcpy(hash, ciphertext, sizeof(ciphertext));
+    uint32_t key[KeyLengthInWord] = { 0x00 };
+    uint32_t plaintext[BlockLengthInWord] = { 0x00 };
+    memcpy(key, hash, sizeof(key));
+    memcpy(plaintext, message, sizeof(plaintext) / 2);
+    memcpy(plaintext + 4, hash + 4, sizeof(plaintext) / 2);
+    uint32_t ciphertext[BlockLengthInWord] = { 0x00 };
+    blockCipher(ciphertext, key, plaintext);
+    memcpy(hash, ciphertext, sizeof(ciphertext));
 }
 
 /*
-SHA-3 API: Update() processes data using the compression function.
-Whatever integral amount of data the Update() routine can process
-through the compression function is handled. Any remaining data must
-be stored for future processing.
-Parameters:
-- state: a structure that holds the hashState information
-- data: the input data to be hashed
-- databitlen: the length, in bits, of the input data to be hashed
-Returns:
-- Success value.
+  SHA-3 API: Update() processes data using the compression function.
+  Whatever integral amount of data the Update() routine can process
+  through the compression function is handled. Any remaining data must
+  be stored for future processing.
+  Parameters:
+  - state: a structure that holds the hashState information
+  - data: the input data to be hashed
+  - databitlen: the length, in bits, of the input data to be hashed
+  Returns:
+  - Success value.
 */
 static HashReturn Update(hashState *state, const BitSequence *data, DataLength databitlen)
 {
-	/* messageLength[0] is the most significant word． */
-	state->messageLength[0] = (uint32_t)(databitlen >> 32);
-	state->messageLength[1] = (uint32_t)databitlen;
+    /* messageLength[0] is the most significant word． */
+    state->messageLength[0] = (uint32_t)(databitlen >> 32);
+    state->messageLength[1] = (uint32_t)databitlen;
 
-	/* Apply the compression function. */
-	while (databitlen >= MessageBlockLengthInBit) {
-		setMessage(state->message, data);
-		compressionFunction(state->hash, state->message);
-		data += MessageBlockLengthInByte;
-		databitlen -= MessageBlockLengthInBit;
-	}
+    /* Apply the compression function. */
+    while (databitlen >= MessageBlockLengthInBit) {
+        setMessage(state->message, data);
+        compressionFunction(state->hash, state->message);
+        data += MessageBlockLengthInByte;
+        databitlen -= MessageBlockLengthInBit;
+    }
 
-	state->remainingLength = databitlen;
-	memset(state->message, 0x00, MessageBlockLengthInByte);
-	if (state->remainingLength != 0) {
-		setRemainingMessage(state->message, state->remainingLength, data);
-	}
+    state->remainingLength = databitlen;
+    memset(state->message, 0x00, MessageBlockLengthInByte);
+    if (state->remainingLength != 0) {
+        setRemainingMessage(state->message, state->remainingLength, data);
+    }
 
-	return SUCCESS;
+    return SUCCESS;
 }
 
 /* Padding function */
 static void paddingMessage(uint32_t *message, uint32_t remainingLength)
 {
-	int last = remainingLength / 32;
-	message[last] |= 0x00000001U << (31 - (remainingLength % 32));
+    int last = remainingLength / 32;
+    message[last] |= 0x00000001U << (31 - (remainingLength % 32));
 }
 
 static void toBitSequence256(BitSequence *hashval, const uint32_t *hash)
 {
-	for (int i = 0; i < HashLengthInByte; i += 4) {
-		hashval[i + 0] = (BitSequence)(hash[i / 4] >> 24);
-		hashval[i + 1] = (BitSequence)(hash[i / 4] >> 16);
-		hashval[i + 2] = (BitSequence)(hash[i / 4] >> 8);
-		hashval[i + 3] = (BitSequence)(hash[i / 4] >> 0);
-	}
+    for (int i = 0; i < HashLengthInByte; i += 4) {
+        hashval[i + 0] = (BitSequence) (hash[i / 4] >> 24);
+        hashval[i + 1] = (BitSequence) (hash[i / 4] >> 16);
+        hashval[i + 2] = (BitSequence) (hash[i / 4] >> 8);
+        hashval[i + 3] = (BitSequence) (hash[i / 4] >> 0);
+    }
 }
 
 /*
-SHA-3 API: Final() processes any remaining partial block of the
-input data and performs any output filtering that may be needed to
-produce the final hash value.  This function is called with pointers
-to the appropriate hashState structure and the storage for the final
-hash value to be returned (hashval). It performs any post processing
-that is necessary, including the handling of any partial blocks, and
-places the final hash value in hashval. Lastly, an appropriate
-status value is returned.
-Parameters:
-- state: a structure that holds the hashState information
-- hashval: the storage for the final (output) hash value to be returned
-Returns:
-- Success value.
+  SHA-3 API: Final() processes any remaining partial block of the
+  input data and performs any output filtering that may be needed to
+  produce the final hash value.  This function is called with pointers
+  to the appropriate hashState structure and the storage for the final
+  hash value to be returned (hashval). It performs any post processing
+  that is necessary, including the handling of any partial blocks, and
+  places the final hash value in hashval. Lastly, an appropriate
+  status value is returned.
+  Parameters:
+  - state: a structure that holds the hashState information
+  - hashval: the storage for the final (output) hash value to be returned
+  Returns:
+  - Success value.
 */
 static HashReturn Final(hashState *state, BitSequence *hashval)
 {
-	/* Is the message length a multiple of the block length? */
-	if (state->remainingLength == 0) {
-		state->message[0] = 0x80000000U;
-	}
-	else {
-		paddingMessage(state->message, state->remainingLength);
-		compressionFunction(state->hash, state->message);
-		state->message[0] = 0x00000000U;
-	}
-	state->message[1] = 0x00000000U;
-	state->message[2] = state->messageLength[0];
-	state->message[3] = state->messageLength[1];
+    /* Is the message length a multiple of the block length? */
+    if (state->remainingLength == 0) {
+        state->message[0] = 0x80000000U;
+    } else {
+        paddingMessage(state->message, state->remainingLength);
+        compressionFunction(state->hash, state->message);
+        state->message[0] = 0x00000000U;
+    }
+    state->message[1] = 0x00000000U;
+    state->message[2] = state->messageLength[0];
+    state->message[3] = state->messageLength[1];
 
-	/* Last compression function */
-	compressionFunction(state->hash, state->message);
-	state->remainingLength = 0;
-	memset(state->message, 0x00, sizeof(state->message));
+    /* Last compression function */
+    compressionFunction(state->hash, state->message);
+    state->remainingLength = 0;
+    memset(state->message, 0x00, sizeof(state->message));
 
-	toBitSequence256(hashval, state->hash);
+    toBitSequence256(hashval, state->hash);
 
-	return SUCCESS;
+    return SUCCESS;
 }
 
 /*
-SHA-3 API: Hash() provides a method to perform all-at-once
-processing of the input data and returns the resulting hash
-value. The Hash() function is called with a pointer to the data to
-be processed, the length of the data to be processed (databitlen), a
-pointer to the storage for the resulting hash value (hashval), and a
-length of the desired hash value (hashbitlen). This function
-utilizes the previous three function calls, namely Init(), Update(),
-and Final().
-Parameters:
-- hashbitlen: the length in bits of the desired hash value
-- data: the input data to be hashed
-- databitlen: the length, in bits, of the data to be hashed
-- hashval: the resulting hash value of the provided data
-Returns:
-- Success value.
+  SHA-3 API: Hash() provides a method to perform all-at-once
+  processing of the input data and returns the resulting hash
+  value. The Hash() function is called with a pointer to the data to
+  be processed, the length of the data to be processed (databitlen), a
+  pointer to the storage for the resulting hash value (hashval), and a
+  length of the desired hash value (hashbitlen). This function
+  utilizes the previous three function calls, namely Init(), Update(),
+  and Final().
+  Parameters:
+  - hashbitlen: the length in bits of the desired hash value
+  - data: the input data to be hashed
+  - databitlen: the length, in bits, of the data to be hashed
+  - hashval: the resulting hash value of the provided data
+  Returns:
+  - Success value.
 */
 HashReturn Hash(int hashbitlen, const BitSequence *data,
-	DataLength databitlen, BitSequence *hashval)
+                DataLength databitlen, BitSequence *hashval)
 {
-	hashState state;
-	HashReturn ret = Init(&state, hashbitlen);
-	if (ret != SUCCESS) {
-		return ret;
-	}
-	ret = Update(&state, data, databitlen);
-	if (ret != SUCCESS) {
-		return ret;
-	}
-	ret = Final(&state, hashval);
-	if (ret != SUCCESS) {
-		return ret;
-	}
+    hashState state;
+    HashReturn ret = Init(&state, hashbitlen);
+    if (ret != SUCCESS) {
+        return ret;
+    }
+    ret = Update(&state, data, databitlen);
+    if (ret != SUCCESS) {
+        return ret;
+    }
+    ret = Final(&state, hashval);
+    if (ret != SUCCESS) {
+        return ret;
+    }
 
-	return SUCCESS;
+    return SUCCESS;
 }
 
 /* end of file */
