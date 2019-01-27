@@ -453,7 +453,7 @@ void BytePut(const unsigned char *data, int bytelen)
   printf("\n");
 }
 
-int main_clefia(char* filename)
+int main_clefia(char* msg_filename, char*)
 {
   const unsigned char skey[32] = {
     0xffU,0xeeU,0xddU,0xccU,0xbbU,0xaaU,0x99U,0x88U,
@@ -468,9 +468,9 @@ int main_clefia(char* filename)
   };
   */
 
-    FILE *fp = fopen(filename, "r");
+    FILE *fp = fopen(msg_filename, "r");
     if (fp == NULL) {
-        fprintf(stderr, "Not found: %s\n", filename);
+        fprintf(stderr, "Not found: %s\n", msg_filename);
         exit(1);
     }
     unsigned char *pt = (unsigned char*)malloc(BUFSIZ);
