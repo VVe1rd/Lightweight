@@ -1,138 +1,97 @@
-/*
-  Test routine for Lesamnta-LW reference C99 implementation
-  Note: Lesamnta is a registered trademark of Hitachi, Ltd. in Japan.
-  Released under the MIT license
-  Copyright (C) 2015 Hidenori Kuwakado
-  Permission is hereby granted, free of charge, to any person
-  obtaining a copy of this software and associated documentation files
-  (the "Software"), to deal in the Software without restriction,
-  including without limitation the rights to use, copy, modify, merge,
-  publish, distribute, sublicense, and/or sell copies of the Software,
-  and to permit persons to whom the Software is furnished to do so,
-  subject to the following conditions:
-  The above copyright notice and this permission notice shall be
-  included in all copies or substantial portions of the Software.
-  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-  EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-  MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-  NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS
-  BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
-  ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
-  CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-  SOFTWARE.
-*/
+#include <cstdio>
+#include <cstring>
+#include <chrono>
+#include <ctime>
+#include <cstdlib>
+#include <iostream>
 
-#define _GNU_SOURCE
+#define ROUNDS_NUMBER 100
 
-#include <getopt.h>
-#include <stdint.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include "lesamnta-LW.h"
+using namespace std;
+typedef std::chrono::high_resolution_clock Clock;
 
-#define NELMS(a) (sizeof(a)/sizeof(a[0]))
+int (*algorithm)(char*);
+int main_LW(char* filename);
+int main_clefia(char* filename);
 
-
-static void showUsage(const char *programName)
+void getOutput()
 {
-    fprintf(stderr, "%s [--help] [--testVector] file\n", programName);
-}
+    int algorithm_id, i;
+    char message[32];
 
+    cout << "Filename: ";
+    scanf("%s", message);
 
-static void showTestVector(void)
-{
-    /* Hash value */
-    BitSequence hashval[LESAMNTALW_HASH_BITLENGTH / 8];
+    cout << "Choose an algorithm" << endl;
+    cout << "1 - Lesamnta-LW\n" << endl;
+    cout << "2 - Clefia\n" << endl;
+    cin >> algorithm_id;
 
-    /* Test vector 1
-       Ref: IEICE Trans. vol.E95-A, no.1, 2012, p.97 */
+    auto t_begin = Clock::now();
+    auto t_end = Clock::now();
+
+    switch (algorithm_id)
     {
-        BitSequence data[] = { 'a', 'b', 'c' };
-        DataLength databitlen = NELMS(data) * 8;
-        memset(hashval, 0x00, sizeof(hashval));
-        Hash(LESAMNTALW_HASH_BITLENGTH, data, databitlen, hashval);
-        printf("message: ");
-        for (int i = 0; i < NELMS(data); ++i) {
-            printf("%02x", data[i]);
-        }
-        printf("\n");
-        printf("hashval: ");
-        for (int i = 0; i < LESAMNTALW_HASH_BITLENGTH / 8; ++i) {
-            printf("%02x", hashval[i]);
-        }
-        printf("\n");
-        printf("Note: The hash value in the reference is incorrect.\n\n");
+    case 1:
+        algorithm = main_LW;
+        break;
+    case 2:
+        algorithm = main_clefia;
+        break;
     }
 
-    /* Test vector 2 */
+    t_begin = Clock::now();
+    for (i = 0; i < ROUNDS_NUMBER; ++i)
     {
-        BitSequence data[256/8] = { 0x00 };
-        for (int i = 0; i < NELMS(data); ++i) {
-            data[i] = (BitSequence)'L';
+        algorithm(message);
+    }
+    t_end = Clock::now();
+
+    std::cout << "Execution time: "
+    << std::chrono::duration_cast<std::chrono::nanoseconds>(t_end - t_begin).count() / ROUNDS_NUMBER
+    << " nanoseconds" << std::endl;
+}
+
+void getRandomMsg()
+{
+    unsigned int len;
+    int i;
+    FILE *f;
+    string msg;
+    string filename = "random.txt";
+    cout << "Message length (in bytes): ";
+    cin >> len;
+    f = fopen(filename.c_str(), "wt");
+    if (f != NULL)
+    {
+        for (i = 0; i < len; ++i)
+        {
+            msg = msg + (char)(rand() % 256);
         }
-        DataLength databitlen = NELMS(data) * 8;
-        Hash(LESAMNTALW_HASH_BITLENGTH, data, databitlen, hashval);
-        printf("message: ");
-        for (int i = 0; i < NELMS(data); ++i) {
-            printf("%02x", data[i]);
-        }
-        printf("\n");
-        printf("hashval: ");
-        for (int i = 0; i < LESAMNTALW_HASH_BITLENGTH / 8; ++i) {
-            printf("%02x", hashval[i]);
-        }
-        printf("\n");
+        fputs(msg.c_str(), f);
+        fclose(f);
+    }
+    else
+    {
+        cout << "Error while opening file to create!" << endl;
     }
 }
 
-
-int main_LW(char* filename)
+int main()
 {
-    /* A message is read from the file. */
-    FILE *fp = fopen(filename, "r");
-    if (fp == NULL) {
-        fprintf(stderr, "Not found: %s\n", filename);
-        exit(EXIT_FAILURE);
+    int mode;
+    srand(time(0));
+    cout << "Choose mode:" << endl;
+    cout << "1 - to get a hash/cipher" << endl;
+    cout << "2 - to generate a random message" << endl;
+    cin >> mode;
+    if (mode == 1)
+    {
+        getOutput();
     }
-    BitSequence *data = (BitSequence*)malloc(BUFSIZ);
-    if (data == NULL) {
-        fprintf(stderr, "Not enough memory\n");
-        exit(EXIT_FAILURE);
+    else if (mode == 2)
+    {
+        getRandomMsg();
     }
-    DataLength bytelen = 0;
-    int c;
-    while ((c = fgetc(fp)) != EOF) {
-        data[bytelen] = (BitSequence)c;
-        ++bytelen;
-        if (bytelen % BUFSIZ == 0) {
-            BitSequence *tmp = (BitSequence*)realloc(data, bytelen + BUFSIZ);
-            if (tmp == NULL) {
-                fprintf(stderr, "Not enough memory\n");
-                exit(EXIT_FAILURE);
-            } else {
-                data = tmp;
-            }
-        }
-    }
-    DataLength databitlen = bytelen * 8;
-    BitSequence hashval[LESAMNTALW_HASH_BITLENGTH / 8];
-    Hash(LESAMNTALW_HASH_BITLENGTH, data, databitlen, hashval);
-    printf("message: ");
-    for (int i = 0; i < bytelen; ++i) {
-            printf("%02x", data[i]);
-    }
-    printf("\n");
-    printf("hashval: ");
-    for (int i = 0; i < LESAMNTALW_HASH_BITLENGTH / 8; ++i) {
-        printf("%02x", hashval[i]);
-    }
-    printf("\n");
-    free(data);
-
     return 0;
 }
-
-/* end of file */
-
