@@ -2,7 +2,7 @@
 #ifndef _SPONGENT_H_
 #define _SPONGENT_H_
 
-#define _SPONGENT088080008_
+#define _SPONGENT128128008_
 
 #if		defined(_SPONGENT088080008_)
 #define rate		8

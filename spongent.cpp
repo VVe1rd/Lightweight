@@ -394,7 +394,7 @@ HashReturn SpongentHash(const BitSequence *data, DataLength databitlen, BitSeque
 //--------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 //Here is your message to hash
-void generateTestVectors(unsigned char* random_message)
+void generateTestVectors(unsigned char* random_message, int msg_length)
 {
     int i;
     BitSequence hashval[hashsize / 8] = { 0 };
@@ -416,7 +416,7 @@ void generateTestVectors(unsigned char* random_message)
     }
     printf("\n");*/
 
-    DataLength databitlen = 216;
+    DataLength databitlen = msg_length;
 
     SpongentHash(message, databitlen, hashval);
 
@@ -432,7 +432,7 @@ void generateTestVectors(unsigned char* random_message)
 
 int main_Spongent(unsigned char* random_message, int msg_length, unsigned char*, int, unsigned char*, int)
 {
-    generateTestVectors(random_message);
+    generateTestVectors(random_message, msg_length);
 
 
     return 0;

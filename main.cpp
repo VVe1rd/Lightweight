@@ -16,6 +16,8 @@ int main_clefia(unsigned char* random_message, int msg_length, unsigned char*, i
 int main_Spongent(unsigned char* random_message, int msg_length, unsigned char*, int, unsigned char*, int);
 int main_present(unsigned char* random_message, int msg_length, unsigned char* random_key, int key_length, unsigned char* random_iv, int iv_length);
 int main_grain(unsigned char* random_message, int msg_length, unsigned char* random_key, int key_length, unsigned char* random_iv, int iv_length);
+int main_AES(unsigned char* random_message, int msg_length, unsigned char* random_key, int key_length, unsigned char* random_iv, int iv_length);
+
 
 int main(int argc, char* argv[])
 {
@@ -59,6 +61,7 @@ int main(int argc, char* argv[])
     cout << "3 - Spongent" << endl;
     cout << "4 - PRESENT" << endl;
     cout << "5 - Grain" << endl;
+	cout << "6 - AES" << endl;
     cin >> algorithm_id;
 
     auto t_begin = Clock::now();
@@ -81,6 +84,9 @@ int main(int argc, char* argv[])
         case 5:
             algorithm = main_grain;
             break;
+		case 6:
+			algorithm = main_AES;
+			break;
     }
 
     t_begin = Clock::now();
