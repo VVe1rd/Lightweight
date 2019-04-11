@@ -1,26 +1,4 @@
-/*
-  Test routine for Lesamnta-LW reference C99 implementation
-  Note: Lesamnta is a registered trademark of Hitachi, Ltd. in Japan.
-  Released under the MIT license
-  Copyright (C) 2015 Hidenori Kuwakado
-  Permission is hereby granted, free of charge, to any person
-  obtaining a copy of this software and associated documentation files
-  (the "Software"), to deal in the Software without restriction,
-  including without limitation the rights to use, copy, modify, merge,
-  publish, distribute, sublicense, and/or sell copies of the Software,
-  and to permit persons to whom the Software is furnished to do so,
-  subject to the following conditions:
-  The above copyright notice and this permission notice shall be
-  included in all copies or substantial portions of the Software.
-  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-  EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-  MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-  NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS
-  BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
-  ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
-  CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-  SOFTWARE.
-*/
+
 
 #define _GNU_SOURCE
 
@@ -88,40 +66,16 @@ static void showTestVector(void)
 }
 
 
-int main_LW(char* msg_filename, char*)
+int main_LW(unsigned char* random_message, int msg_length, unsigned char*, int, unsigned char*, int)
 {
-    /* A message is read from the file. */
-    FILE *fp = fopen(msg_filename, "r");
-    if (fp == NULL) {
-        fprintf(stderr, "Not found: %s\n", msg_filename);
-        exit(EXIT_FAILURE);
-    }
-    BitSequence *data = (BitSequence*)malloc(BUFSIZ);
-    if (data == NULL) {
-        fprintf(stderr, "Not enough memory\n");
-        exit(EXIT_FAILURE);
-    }
-    DataLength bytelen = 0;
-    int c;
-    while ((c = fgetc(fp)) != EOF) {
-        data[bytelen] = (BitSequence)c;
-        ++bytelen;
-        if (bytelen % BUFSIZ == 0) {
-            BitSequence *tmp = (BitSequence*)realloc(data, bytelen + BUFSIZ);
-            if (tmp == NULL) {
-                fprintf(stderr, "Not enough memory\n");
-                exit(EXIT_FAILURE);
-            } else {
-                data = tmp;
-            }
-        }
-    }
+    BitSequence *data = random_message;
+    DataLength bytelen = msg_length;
     DataLength databitlen = bytelen * 8;
     BitSequence hashval[LESAMNTALW_HASH_BITLENGTH / 8];
     Hash(LESAMNTALW_HASH_BITLENGTH, data, databitlen, hashval);
     printf("message: ");
     for (int i = 0; i < bytelen; ++i) {
-            printf("%02x", data[i]);
+        printf("%02x", data[i]);
     }
     printf("\n");
     printf("hashval: ");
@@ -135,4 +89,3 @@ int main_LW(char* msg_filename, char*)
 }
 
 /* end of file */
-

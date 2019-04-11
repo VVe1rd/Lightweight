@@ -1,26 +1,9 @@
-/******************************************************************************
- * Copyright 2007, 2008 Sony Corporation
- *
- * clefia_ref.c
- *
- * "The 128-bit Blockcipher CLEFIA"
- * Reference ANSI C code
- *
- * Version  1.0.1 (August 26 2008)
- *
- * NOTICE
- * This reference code is written for a clear understanding of the CLEFIA
- * blockcipher algorithm based on the specification of CLEFIA.
- * Therefore, this code does not include any optimizations for
- * high-speed or low-cost implementations or any countermeasures against
- * implementation attacks.
- *
- *****************************************************************************/
 
- #include <stdio.h>
- #include <stdint.h>
- #include <malloc.h>
- #include <stdlib.h>
+
+#include <stdio.h>
+#include <stdint.h>
+#include <malloc.h>
+#include <stdlib.h>
 
 void ByteCpy(unsigned char *dst, const unsigned char *src, int bytelen);
 void ByteXor(unsigned char *dst, const unsigned char *a, const unsigned char *b, int bytelen);
@@ -447,68 +430,45 @@ void ClefiaDecrypt(unsigned char *pt, const unsigned char *ct, const unsigned ch
 
 void BytePut(const unsigned char *data, int bytelen)
 {
-  while(bytelen-- > 0){
-    printf("%02x", *data++);
-  }
-  printf("\n");
+    while(bytelen-- > 0){
+        printf("%02x", *data++);
+    }
+    printf("\n");
 }
 
-int main_clefia(char* msg_filename, char*)
+int main_clefia(unsigned char* random_message, int msg_length, unsigned char*, int key_length, unsigned char*, int)
 {
-  const unsigned char skey[32] = {
-    0xffU,0xeeU,0xddU,0xccU,0xbbU,0xaaU,0x99U,0x88U,
-    0x77U,0x66U,0x55U,0x44U,0x33U,0x22U,0x11U,0x00U,
-    0xf0U,0xe0U,0xd0U,0xc0U,0xb0U,0xa0U,0x90U,0x80U,
-    0x70U,0x60U,0x50U,0x40U,0x30U,0x20U,0x10U,0x00U
-  };
-  /*
-  const unsigned char pt[16] = {
-    0x00U,0x01U,0x02U,0x03U,0x04U,0x05U,0x06U,0x07U,
-    0x08U,0x09U,0x0aU,0x0bU,0x0cU,0x0dU,0x0eU,0x0fU
-  };
-  */
+    const unsigned char skey[32] = {
+            0xffU,0xeeU,0xddU,0xccU,0xbbU,0xaaU,0x99U,0x88U,
+            0x77U,0x66U,0x55U,0x44U,0x33U,0x22U,0x11U,0x00U,
+            0xf0U,0xe0U,0xd0U,0xc0U,0xb0U,0xa0U,0x90U,0x80U,
+            0x70U,0x60U,0x50U,0x40U,0x30U,0x20U,0x10U,0x00U
+    };
+    /*
+    const unsigned char pt[16] = {
+      0x00U,0x01U,0x02U,0x03U,0x04U,0x05U,0x06U,0x07U,
+      0x08U,0x09U,0x0aU,0x0bU,0x0cU,0x0dU,0x0eU,0x0fU
+    };
+    */
 
-    FILE *fp = fopen(msg_filename, "r");
-    if (fp == NULL) {
-        fprintf(stderr, "Not found: %s\n", msg_filename);
-        exit(1);
-    }
-    unsigned char *pt = (unsigned char*)malloc(BUFSIZ);
-    if (pt == NULL) {
-        fprintf(stderr, "Not enough memory\n");
-        exit(1);
-    }
-    uint64_t bytelen = 0;
-    int c;
-    while ((c = fgetc(fp)) != EOF) {
-        pt[bytelen] = (unsigned char)c;
-        ++bytelen;
-        if (bytelen % BUFSIZ == 0) {
-            unsigned char *tmp = (unsigned char*)realloc(pt, bytelen + BUFSIZ);
-            if (tmp == NULL) {
-                fprintf(stderr, "Not enough memory\n");
-                exit(EXIT_FAILURE);
-            } else {
-                pt = tmp;
-            }
-        }
-    }
+    unsigned char *pt = random_message;
+    uint64_t bytelen = msg_length;
 
-  unsigned char ct[16];
-  unsigned char dst[16];
-  unsigned char rk[8 * 26 + 16]; /* 8 bytes x 26 rounds(max) + whitening keys */
-  int r;
+    unsigned char ct[16];
+    unsigned char dst[16];
+    unsigned char rk[8 * 26 + 16]; /* 8 bytes x 26 rounds(max) + whitening keys */
+    int r;
 
-  printf("--- Test ---\n");
-  printf("plaintext:  "); BytePut(pt, 16);
-  printf("secretkey:  "); BytePut(skey, 32);
+    printf("--- Test ---\n");
+    printf("plaintext:  "); BytePut(pt, 16);
+    printf("secretkey:  "); BytePut(skey, 32);
 
-  /* for 128-bit key */
-  printf("--- CLEFIA-128 ---\n");
-  /* encryption */
-  r = ClefiaKeySet(rk, skey, 128);
-  ClefiaEncrypt(dst, pt, rk, r);
-  printf("ciphertext: "); BytePut(dst, 16);
+    /* for 128-bit key */
+    printf("--- CLEFIA-128 ---\n");
+    /* encryption */
+    r = ClefiaKeySet(rk, skey, 128);
+    ClefiaEncrypt(dst, pt, rk, r);
+    printf("ciphertext: "); BytePut(dst, 16);
 
-  return 0;
+    return 0;
 }
