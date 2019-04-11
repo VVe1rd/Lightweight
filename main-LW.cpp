@@ -1,7 +1,4 @@
 
-
-#define _GNU_SOURCE
-
 #include <getopt.h>
 #include <stdint.h>
 #include <stdio.h>
